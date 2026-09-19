@@ -1,0 +1,5 @@
+.env
+.venv
+uploads
+.pytest_cache
+test.py
