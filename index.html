@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rahul Sutradhar — RAG that doesn’t make things up</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{--bg:#fff;--ink:#0a1440;--mute:#48548a;--blue:#1d3fc4;--card:rgba(255,255,255,.8);--line:rgba(29,63,196,.2);--pt:#1d3fc4;--hot:#ff6347;--onred:#0a1440;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#050b24;--ink:#f1f4ff;--mute:#a9b4e0;--blue:#7b97ff;--card:rgba(12,22,66,.66);--line:rgba(123,151,255,.24);--pt:#7b97ff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#050b24;--ink:#f1f4ff;--mute:#a9b4e0;--blue:#7b97ff;--card:rgba(12,22,66,.66);--line:rgba(123,151,255,.24);--pt:#7b97ff;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;transition:opacity .8s;pointer-events:none}
+main,footer{position:relative;z-index:1}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.1;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:90px 0}
+.ey{font:500 12px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--hot);margin-bottom:16px}
+h2{font-size:clamp(28px,4.4vw,44px);margin-bottom:18px}
+p{margin:0 0 14px;color:var(--mute)}
+nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.logo{font:600 15px "JetBrains Mono",monospace;color:var(--blue)}.logo b{color:var(--hot)}
+nav a{color:var(--mute);text-decoration:none;font-size:14px;margin-left:22px}nav a:hover{color:var(--blue)}
+.hero{min-height:88vh;display:flex;align-items:center;padding:40px 0 60px}
+.hero .in{max-width:560px}
+h1{font-size:clamp(40px,7vw,76px);letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--blue);position:relative}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:5px;background:var(--hot);border-radius:3px}
+.sub{font-size:19px;margin:26px 0 30px}
+.btn{display:inline-block;padding:14px 26px;border-radius:10px;font:600 15px Inter,sans-serif;text-decoration:none;border:1px solid var(--line);color:var(--ink);cursor:pointer;background:transparent;transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn.r{background:var(--hot);border-color:var(--hot);color:var(--onred)}
+.hint{margin-top:34px;font:500 12px "JetBrains Mono",monospace;color:var(--mute);letter-spacing:.06em}
+.hint i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--hot);margin-right:8px;animation:pl 1.6s infinite}
+@keyframes pl{50%{opacity:.25}}
+.glass{background:var(--card);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}
+.tabs button{padding:10px 18px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--mute);font:500 14px Inter,sans-serif;cursor:pointer}
+.tabs button.on{background:var(--blue);border-color:var(--blue);color:var(--bg)}
+.pitch{padding:30px;max-width:760px}
+.pitch h3{font-size:24px;margin-bottom:14px}
+.pitch ul{margin:0;padding:0;list-style:none}
+.pitch li{padding:11px 0 11px 28px;position:relative;border-top:1px solid var(--line);color:var(--mute)}
+.pitch li b{color:var(--ink)}
+.pitch li::before{content:"";position:absolute;left:4px;top:19px;width:10px;height:10px;border-radius:50%;background:var(--hot)}
+.lab{display:grid;grid-template-columns:minmax(0,520px) 1fr;gap:30px}
+.panel{padding:26px}
+.chips{display:flex;flex-direction:column;gap:8px;margin:18px 0}
+.chips button{text-align:left;padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font:500 14.5px Inter,sans-serif;cursor:pointer;transition:.2s}
+.chips button:hover,.chips button.on{border-color:var(--hot);transform:translateX(4px)}
+.stages{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.stages span{font:500 11.5px "JetBrains Mono",monospace;padding:6px 10px;border-radius:6px;border:1px solid var(--line);color:var(--mute);transition:.25s}
+.stages span.now{background:var(--hot);border-color:var(--hot);color:var(--onred)}
+.stages span.ok{border-color:var(--blue);color:var(--blue)}
+.ans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.a{padding:16px;border-radius:12px;border:1px solid var(--line);min-height:150px;font-size:14.5px}
+.a small{display:inline-block;font:500 11px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.a.bad{border-top:3px solid var(--hot)}.a.bad small{color:var(--hot)}
+.a.good{border-top:3px solid var(--blue)}.a.good small{color:var(--blue)}
+.a p{color:var(--ink);margin:0 0 10px}
+.cite{display:inline-block;font:500 11.5px "JetBrains Mono",monospace;padding:4px 9px;border-radius:6px;background:var(--blue);color:var(--bg)}
+.note{font-size:12.5px;color:var(--mute);margin:14px 0 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.tilt{padding:28px;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .15s;background-image:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),rgba(255,99,71,.16),transparent 70%)}
+.tilt .n{font:500 12px "JetBrains Mono",monospace;color:var(--hot);margin-bottom:10px}
+.tilt h3{font-size:22px;margin-bottom:8px}.tilt p{margin:0;font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tags span{padding:7px 14px;border:1px solid var(--line);border-radius:99px;font-size:13px;font-weight:500;background:var(--card)}
+.road{list-style:none;margin:0;padding:0 0 0 4px;border-left:2px solid var(--line)}
+.road li{position:relative;padding:0 0 18px 24px;color:var(--mute);font-size:15px}
+.road li::before{content:"";position:absolute;left:-7px;top:7px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--blue)}
+.road b{color:var(--ink);font:500 12.5px "JetBrains Mono",monospace;margin-right:6px}
+.cta{text-align:center;padding:60px 28px}
+.cta h2{font-size:clamp(30px,5vw,54px)}
+.cta .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:26px}
+.st{margin-top:22px;font-size:13px;color:var(--mute)}.st i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--hot);margin-right:8px}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s,transform .8s}.rv.in{opacity:1;transform:none}
+@media(max-width:820px){.lab,.two,.grid,.ans{grid-template-columns:1fr}section{padding:60px 0}.hero{min-height:80vh}nav a{margin-left:14px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<main>
+<div class="wrap">
+  <nav><span class="logo">rahul<b>.</b>sutradhar</span><div><a href="#pitch">Why me</a><a href="#lab">Live demo</a><a href="#build">The build</a><a href="#hire">Contact</a></div></nav>
+
+  <header class="hero"><div class="in">
+    <div class="ey">AI / backend engineer · RAG KBEng</div>
+    <h1>I build RAG that <em>doesn’t</em> make things up.</h1>
+    <p class="sub">Most RAG demos fail in production in three ways: they hallucinate, retrieve noise, and ignore security. KBEng is my answer to all three. Don’t read about it, try it.</p>
+    <a class="btn r" href="#lab">Try the live demo</a> <a class="btn" href="#pitch">Why hire me</a>
+    <div class="hint"><i></i>Move your cursor. That’s a vector space.</div>
+  </div></header>
+
+  <section id="pitch" class="rv">
+    <div class="ey">The pitch</div>
+    <h2>Pick your lens.</h2>
+    <p>Same project, three different reasons it matters.</p>
+    <div class="tabs" id="tabs"><button class="on" data-t="0">Recruiter</button><button data-t="1">Engineer</button><button data-t="2">Hiring manager</button></div>
+    <div class="glass pitch" id="pitchbox"></div>
+  </section>
+
+  <section id="lab" class="rv">
+    <div class="ey">Live demo</div>
+    <h2>Ask the knowledge base.</h2>
+    <div class="lab">
+      <div class="glass panel">
+        <p style="margin:0">Pick a question. Watch the 3D space: the red node is your query, and the lit points are the chunks KBEng retrieves.</p>
+        <div class="chips" id="chips"></div>
+        <div class="stages" id="stages"></div>
+        <div class="ans" id="ans"><div class="a bad"><small>Naive RAG</small><p style="color:var(--mute)">—</p></div><div class="a good"><small>KBEng</small><p style="color:var(--mute)">—</p></div></div>
+        <p class="note">Simulated demo on a sample HR corpus. It shows the behavior of the real pipeline, not live model calls.</p>
+      </div>
+      <div></div>
+    </div>
+  </section>
+
+  <section id="build" class="rv">
+    <div class="ey">Under the hood</div>
+    <h2>Four decisions that make it production-grade.</h2>
+    <div class="grid" style="margin-top:28px">
+      <div class="glass tilt"><div class="n">01 / SECURITY</div><h3>Multi-tenant by design</h3><p>JWT in HTTP-only cookies and strict per-user data isolation. Users only ever query their own document silos.</p></div>
+      <div class="glass tilt"><div class="n">02 / RETRIEVAL</div><h3>Hybrid search + reranking</h3><p>Semantic embeddings plus keyword search, then a cross-encoder reranks the top-K so the LLM sees dense, relevant context.</p></div>
+      <div class="glass tilt"><div class="n">03 / GROUNDING</div><h3>Citations or silence</h3><p>Strict JSON-schema output forces every claim to carry a citation from the source. No citation, no claim.</p></div>
+      <div class="glass tilt"><div class="n">04 / RESILIENCE</div><h3>Ingestion that survives reality</h3><p>Batching, exponential backoff on 429/503, and async processing so large PDF corpora never block the API.</p></div>
+    </div>
+    <div class="glass panel" style="margin-top:20px"><h3 style="font-size:24px;margin-bottom:8px">“If you can’t measure it, you didn’t build it.”</h3><p style="margin:0">A custom evaluation suite on golden datasets tracks Recall@K, so chunk size, overlap, and embedding choices are tuned with data instead of guesses.</p></div>
+  </section>
+
+  <section class="rv">
+    <div class="two">
+      <div><div class="ey">Stack</div><h2 style="font-size:30px">Toolbox.</h2>
+        <div class="tags"><span>Python 3.12</span><span>FastAPI</span><span>Pydantic v2</span><span>LangChain</span><span>PyJWT</span><span>Beanie</span><span>MongoDB Atlas</span><span>Pinecone</span><span>Google Gemini</span><span>Pytest</span><span>HTTPX</span><span>Recall@K runner</span></div></div>
+      <div><div class="ey">Roadmap</div><h2 style="font-size:30px">What’s next.</h2>
+        <ul class="road"><li><b>01</b>LLM-as-a-Judge for faithfulness and relevance scoring</li><li><b>02</b>S3 / cloud object storage for distributed scaling</li><li><b>03</b>Redis-backed queues (Arq/Celery) for heavy ingestion</li><li><b>04</b>Agentic RAG for multi-step reasoning</li></ul></div>
+    </div>
+  </section>
+</div>
+
+<footer id="hire"><div class="wrap" style="padding-bottom:60px">
+  <div class="glass cta">
+    <div class="ey">Let’s talk</div>
+    <h2>Need AI you can actually trust?</h2>
+    <p>I’m looking for roles where reliability, retrieval quality, and measurable results matter.</p>
+    <div class="row"><a class="btn r" href="mailto:rahuldharrsd1@outlook.com">rahuldharrsd1@outlook.com</a><a class="btn" href="https://www.linkedin.com/in/rahul-sutradhar-42388128b" target="_blank" rel="noopener">LinkedIn</a><a class="btn" href="https://github.com/beingrahull/RAG-based-KnowledgeBase-" target="_blank" rel="noopener">GitHub</a></div>
+    <div class="st"><i></i>Project complete. Currently iterating on answer faithfulness metrics.</div>
+  </div>
+</div></footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ---------- content ---------- */
+const PITCH=[
+ ["For recruiters","Ships real systems, not tutorials",["<b>End-to-end ownership:</b> auth, ingestion, retrieval, generation, and evaluation in one backend.","<b>Modern, in-demand stack:</b> FastAPI, MongoDB, Pinecone, Gemini, Pytest.","<b>Clear communicator:</b> complex ideas explained simply, as this page does."]],
+ ["For engineers","Real design decisions, not wrappers",["<b>Retrieval beyond cosine:</b> hybrid scoring and cross-encoder reranking.","<b>Failure-aware:</b> exponential backoff on 429/503, async ingestion, batching.","<b>Measured:</b> golden datasets and Recall@K drive tuning of chunking and embeddings."]],
+ ["For hiring managers","Thinks like an owner",["<b>Designs for production failure modes:</b> hallucination, noise, tenant isolation.","<b>Evaluates before optimizing:</b> data first, opinions second.","<b>Has a roadmap:</b> judge models, cloud storage, task queues, agentic RAG."]]];
+const Q=[
+ {q:"What’s the notice period for resigning?",c:0,n:"Typically 30 days is standard, though it varies by company.",k:"60 days for Grade B and above, 30 days below Grade B.",s:"hr_handbook.pdf · p.14"},
+ {q:"Can I work remotely from another country?",c:1,n:"Yes, many companies allow short stints abroad if your manager agrees.",k:"Not covered by default. Cross-border remote work needs written HR approval.",s:"remote_policy.pdf · p.7"},
+ {q:"What’s the travel reimbursement limit?",c:2,n:"Usually around $100 per day for meals and lodging.",k:"₹6,500 per night for lodging; meals capped at ₹1,800 per day.",s:"expense_policy.pdf · p.3"},
+ {q:"Who won the 2018 World Cup?",c:-1,n:"France won the 2018 World Cup. (Answered from outside your documents.)",k:"I can’t answer that from your documents. No chunk passed the relevance threshold.",s:null}];
+const ST=["Embed query","Hybrid search","Rerank","Ground","Answer"];
+const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- UI ---------- */
+function showPitch(i){const p=PITCH[i];$("pitchbox").innerHTML=`<h3>${p[1]}</h3><ul>${p[2].map(x=>`<li>${x}</li>`).join("")}</ul>`;document.querySelectorAll("#tabs button").forEach((b,j)=>b.classList.toggle("on",i===j))}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showPitch(+b.dataset.t));showPitch(0);
+$("chips").innerHTML=Q.map((x,i)=>`<button data-i="${i}">${x.q}</button>`).join("");
+$("stages").innerHTML=ST.map(s=>`<span>${s}</span>`).join("");
+let busy=false;
+document.querySelectorAll("#chips button").forEach(b=>b.onclick=()=>runQ(+b.dataset.i));
+async function runQ(i){
+ if(busy)return;busy=true;const x=Q[i],sp=[...$("stages").children];
+ document.querySelectorAll("#chips button").forEach((b,j)=>b.classList.toggle("on",i===j));
+ $("ans").innerHTML=`<div class="a bad"><small>Naive RAG</small><p style="color:var(--mute)">…</p></div><div class="a good"><small>KBEng</small><p style="color:var(--mute)">…</p></div>`;
+ sp.forEach(s=>s.className="");resetGL();
+ for(let k=0;k<ST.length;k++){
+  sp.forEach((s,j)=>s.className=j<k?"ok":j===k?"now":"");
+  if(k===1)askGL(x.c);if(k===2)rerankGL();
+  await sleep(750)}
+ sp.forEach(s=>s.className="ok");
+ $("ans").innerHTML=`<div class="a bad"><small>Naive RAG · ungrounded</small><p>${x.n}</p></div><div class="a good"><small>KBEng · grounded</small><p>${x.k}</p>${x.s?`<span class="cite">${x.s}</span>`:""}</div>`;
+ busy=false}
+document.querySelectorAll(".tilt").forEach(c=>{
+ c.addEventListener("pointermove",e=>{const r=c.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;c.style.setProperty("--ry",((px-.5)*10)+"deg");c.style.setProperty("--rx",((.5-py)*10)+"deg");c.style.setProperty("--mx",px*100+"%");c.style.setProperty("--my",py*100+"%")});
+ c.addEventListener("pointerleave",()=>{c.style.setProperty("--rx","0deg");c.style.setProperty("--ry","0deg")})});
+const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add("in")),{threshold:.12});
+document.querySelectorAll(".rv").forEach(e=>io.observe(e));
+
+/* ---------- 3D ---------- */
+let R,S,C,G,pts,hot,lines,qn,qg,N=1600,K=7,pos,rnd=[],mx=0,my=0,gl=false,reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const cen=[[-2.4,1.3,.4],[2.2,1.7,-.8],[.2,-2.1,1.3],[-1.5,-1,-2],[1.7,-.6,2]].map(a=>new THREE.Vector3(...a));
+const gs=()=>(Math.random()+Math.random()+Math.random()-1.5)*1.25;
+const css=v=>new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+function recolor(){
+ const b=css("--pt"),c=pts.geometry.attributes.color;
+ for(let i=0;i<N;i++){const s=.5+.5*rnd[i];c.setXYZ(i,b.r*s,b.g*s,b.b*s)}c.needsUpdate=true;
+ const h=css("--hot");hot.material.color=h;lines.material.color=h;qn.material.color=h;qg.material.color=h}
+function initGL(){
+ try{R=new THREE.WebGLRenderer({canvas:$("gl"),antialias:true,alpha:true})}catch(e){$("gl").style.display="none";return}
+ gl=true;R.setPixelRatio(Math.min(devicePixelRatio,2));
+ S=new THREE.Scene();C=new THREE.PerspectiveCamera(55,1,.1,100);C.position.z=9;G=new THREE.Group();S.add(G);
+ const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d"),g=x.createRadialGradient(32,32,0,32,32,32);
+ g.addColorStop(0,"#fff");g.addColorStop(.5,"#fff");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,64,64);
+ const tex=new THREE.CanvasTexture(cv);
+ pos=new Float32Array(N*3);
+ for(let i=0;i<N;i++){const c=cen[i%5];rnd.push(Math.random());pos.set([c.x+gs(),c.y+gs(),c.z+gs()],i*3)}
+ let geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(pos,3));geo.setAttribute("color",new THREE.BufferAttribute(new Float32Array(N*3),3));
+ pts=new THREE.Points(geo,new THREE.PointsMaterial({size:.085,map:tex,vertexColors:true,transparent:true,opacity:.9,depthWrite:false}));G.add(pts);
+ geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(new Float32Array(K*3),3));
+ hot=new THREE.Points(geo,new THREE.PointsMaterial({size:.26,map:tex,transparent:true,depthWrite:false}));hot.visible=false;G.add(hot);
+ geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(new Float32Array(K*6),3));
+ lines=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({transparent:true,opacity:.7}));lines.visible=false;G.add(lines);
+ qn=new THREE.Mesh(new THREE.SphereGeometry(.14,16,16),new THREE.MeshBasicMaterial());qg=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,opacity:.4,depthWrite:false}));qg.scale.set(1.3,1.3,1);
+ qn.visible=qg.visible=false;G.add(qn,qg);
+ recolor();resize();addEventListener("resize",resize);
+ matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>setTimeout(recolor,50));
+ addEventListener("pointermove",e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5});
+ loop(0)}
+function resize(){R.setSize(innerWidth,innerHeight,false);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}
+function resetGL(){if(!gl)return;hot.visible=lines.visible=qn.visible=qg.visible=false;hot.geometry.setDrawRange(0,K);lines.geometry.setDrawRange(0,K*2)}
+function askGL(c){
+ if(!gl)return;const q=c<0?new THREE.Vector3(4.6,3.2,-1):cen[c].clone().add(new THREE.Vector3(.3,.2,.2));
+ qn.position.copy(q);qg.position.copy(q);qn.visible=qg.visible=true;
+ if(c<0)return;
+ const d=[];for(let i=0;i<N;i++)d.push([new THREE.Vector3(pos[i*3],pos[i*3+1],pos[i*3+2]).distanceTo(q),i]);
+ d.sort((a,b)=>a[0]-b[0]);const hp=hot.geometry.attributes.position,lp=lines.geometry.attributes.position;
+ for(let k=0;k<K;k++){const i=d[k][1];hp.setXYZ(k,pos[i*3],pos[i*3+1],pos[i*3+2]);lp.setXYZ(k*2,q.x,q.y,q.z);lp.setXYZ(k*2+1,pos[i*3],pos[i*3+1],pos[i*3+2])}
+ hp.needsUpdate=lp.needsUpdate=true;hot.visible=lines.visible=true}
+function rerankGL(){if(!gl||!hot.visible)return;hot.geometry.setDrawRange(0,3);lines.geometry.setDrawRange(0,6)}
+let gx=0;
+function loop(t){
+ requestAnimationFrame(loop);t*=.001;
+ const wide=innerWidth>820,y=scrollY,vh=innerHeight,lab=$("lab").getBoundingClientRect();
+ const focus=y<vh*.7||(lab.top<vh*.6&&lab.bottom>vh*.3);
+ const tx=wide?(focus?2.6:0):0;gx+=(tx-gx)*.04;G.position.x=gx;
+ $("gl").style.opacity=focus?1:.22;
+ if(!reduce)G.rotation.y+=.0009;
+ G.rotation.x+=(my*.5-G.rotation.x)*.03;G.position.y+=((-my*.6)-G.position.y)*.03;C.position.x+=(mx*1.2-C.position.x)*.03;
+ C.position.z=wide?9:12;C.lookAt(0,0,0);
+ hot.material.size=.26+.06*Math.sin(t*5);qg.scale.setScalar(1.2+.25*Math.sin(t*4));
+ R.render(S,C)}
+if(typeof THREE!=="undefined")initGL();else $("gl").style.display="none";
+</script>
+</body>
+</html>
